@@ -29,5 +29,13 @@ def create_airport_graph() -> DirectedGraph:
 if __name__ == "__main__":
     graph = create_airport_graph()
 
-    print(graph)
-    
+    # Test - find path between two aiports
+    # departure = "TLV"
+    # destination = "BUD"
+    # print(f"Path from {departure} to {destination} is :")
+    # print(f"{'-->'.join(airport.label for airport in graph.get_path(departure, destination))}")
+
+    # Test - find all reachable airports from from a given airport
+    start = "CDG"
+    print(f"All reachable airports from {start} are: ")
+    print(f"{'\n'.join(x for x in graph.get_all_reachable_vertices(start))}")

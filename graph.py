@@ -96,6 +96,9 @@ class DirectedGraph:
     def __init__(self):
         self.vertices: Dict[str, Vertex] = {}
         self.edges: Set[Edge] = set()
+
+    def __str__(self) -> str:
+        return "\n".join([str(edge) for edge in self.edges])
     
     def add_vertex(self, label: str) -> None:
         """
@@ -170,5 +173,30 @@ class DirectedGraph:
             path.append(self.vertices[end_label])
         return path
     
-    def __str__(self) -> str:
-        return "\n".join([str(edge) for edge in self.edges])
+    def get_all_reachable_vertices(self, start_label: str) -> Set[str]:
+        """
+        Get all reachable vertices from the start vertex using DFS algorithm in a directed graph.
+
+        args:
+            start_label (str): The label of the starting vertex.
+
+        returns:
+            Set[str]: A set of labels of vertices reachable from the start vertex.
+        """
+        if start_label not in self.vertices:
+            return set()
+        
+        def dfs(current: Vertex, visited: Set[Vertex], reachable: Set[str]) -> None:
+            visited.add(current)
+            reachable.add(current.label)
+            for edge in current.outgoing_edges:
+                neighbor = edge.end_vertex
+                if neighbor not in visited:
+                    dfs(neighbor, visited, reachable)
+        
+        start_vertex = self.vertices[start_label]
+        visited = set()
+        reachable = set()
+        dfs(start_vertex, visited, reachable)
+        return reachable
+

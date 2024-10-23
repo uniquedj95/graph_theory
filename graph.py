@@ -233,16 +233,19 @@ class DirectedGraph:
         # find additional edges needed
         additional_edges = []
         unreachable_vertices = set(self.vertices.keys()) - reachable
-
         while unreachable_vertices:
             from_vertex = min(reachable)
             to_vertex = min(unreachable_vertices)
             additional_edges.append((from_vertex, to_vertex))
+            
+            # Add the new edge to the graph
+            self.add_edge(from_vertex, to_vertex)
+            
+            # Update reachable and unreachable vertices
             reachable = self.get_all_reachable_vertices(start_label)
             unreachable_vertices = set(self.vertices.keys()) - reachable
         
         return additional_edges
-    
 
     def get_strongly_connected_components(self) -> List[Set[str]]:
         """

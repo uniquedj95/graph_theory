@@ -156,7 +156,7 @@ class DirectedGraph:
             visited.add(current)
             path.append(current)
             
-            for neighbor in current.get_neighbours():
+            for neighbor in current.outgoing_edges:
                 if neighbor not in visited:
                     if dfs(neighbor, end, visited, path):
                         return True

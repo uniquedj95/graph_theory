@@ -217,7 +217,7 @@ class DirectedGraph:
         # if all nodes are reachable from the start vertex, return an empty list.
         if len(reachable) == len(self.vertices): return []
 
-        components = self.get_strogestly_connected_components()
+        components = self.get_strongly_connected_components()
 
         # create a mapping of vertex to its component
         vertex_to_component = {}
@@ -244,50 +244,49 @@ class DirectedGraph:
         return additional_edges
     
 
-    def get_strogestly_connected_components(self) -> List[Set[str]]:
+    def get_strongly_connected_components(self) -> List[Set[str]]:
         """
-        Get the strongly connected components of the graph using Kosaraju's algorithm.
+        Get the strongly connected components of the graph using Tarjan's algorithm.
 
         Returns:
             List[Set[str]]: A list of strongly connected components.
         """
-        def dfs(current: Vertex, visited: Set[Vertex], stack: List[Vertex]) -> None:
-            visited.add(current)
-            for neighbor in current.outgoing_edges:
-                if neighbor.end_vertex not in visited:
-                    dfs(neighbor.end_vertex, visited, stack)
-            stack.append(current)
-        
-        def reverse_edges() -> None:
-            for edge in self.edges:
-                edge.start_vertex, edge.end_vertex = edge.end_vertex, edge.start_vertex
-        
-        def dfs_reverse(current: Vertex, visited: Set[Vertex], component: Set[str]) -> None:
-            visited.add(current)
-            component.add(current.label)
-            for neighbor in current.outgoing_edges:
-                if neighbor.end_vertex not in visited:
-                    dfs_reverse(neighbor.end_vertex, visited, component)
-        
-        # First DFS to fill the stack.
-        visited = set()
-        stack = []
-        for vertex in self.vertices.values():
-            if vertex not in visited:
-                dfs(vertex, visited, stack)
-        
-        # Reverse the edges.
-        reverse_edges()
-        
-        # Second DFS to get the strongly connected components.
-        visited = set()
+        index = 0
+        stack: List[Vertex] = []
+        indices = {}
+        lowlinks = {}
+        on_stack = set()
         components = []
-        while stack:
-            vertex = stack.pop()
-            if vertex not in visited:
+
+        def strongconnect(vertex: Vertex) -> None:
+            nonlocal index
+            indices[vertex] = index
+            lowlinks[vertex] = index
+            index += 1
+            stack.append(vertex)
+            on_stack.add(vertex)
+
+            for edge in vertex.outgoing_edges:
+                neighbor = edge.end_vertex
+                if neighbor not in indices:
+                    strongconnect(neighbor)
+                    lowlinks[vertex] = min(lowlinks[vertex], lowlinks[neighbor])
+                elif neighbor in on_stack:
+                    lowlinks[vertex] = min(lowlinks[vertex], indices[neighbor])
+
+            if lowlinks[vertex] == indices[vertex]:
                 component = set()
-                dfs_reverse(vertex, visited, component)
+                while True:
+                    w = stack.pop()
+                    on_stack.remove(w)
+                    component.add(w.label)
+                    if w == vertex:
+                        break
                 components.append(component)
-        
+
+        for vertex in self.vertices.values():
+            if vertex not in indices:
+                strongconnect(vertex)
+
         return components
 

@@ -30,7 +30,7 @@ if __name__ == "__main__":
     graph = create_airport_graph()
 
     # staring airport
-    starting_airport = "ICN"
+    starting_airport = "TLV"
 
     print(f"Analyzing routes from {starting_airport}")
 

@@ -199,4 +199,95 @@ class DirectedGraph:
         reachable = set()
         dfs(start_vertex, visited, reachable)
         return reachable
+    
+    def get_min_additional_edges(self, start_label: str) -> List[tuple[str, str]]:
+        """
+        Get the minimum number of additional edges to make all vertices reachable from the start vertex.
+
+        args:
+            start_label (str): The label of the starting vertex.
+
+        returns:
+            List[tuple[str, str]]: A list of tuples representing the additional edges to be added.
+        """ 
+        
+        # Get all reachable vertices from the start vertex.
+        reachable = self.get_all_reachable_vertices(start_label)
+        
+        # if all nodes are reachable from the start vertex, return an empty list.
+        if len(reachable) == len(self.vertices): return []
+
+        components = self.get_strogestly_connected_components()
+
+        # create a mapping of vertex to its component
+        vertex_to_component = {}
+        for i, component in enumerate(components):
+            for vertex in component:
+                vertex_to_component[vertex] = i
+
+        # find which component is reachable from the start vertex
+        reachable_components = set()
+        for vertex in reachable:
+            reachable_components.add(vertex_to_component[vertex])
+
+        # find additional edges needed
+        additional_edges = []
+        unreachable_vertices = set(self.vertices.keys()) - reachable
+
+        while unreachable_vertices:
+            from_vertex = min(reachable)
+            to_vertex = min(unreachable_vertices)
+            additional_edges.append((from_vertex, to_vertex))
+            reachable = self.get_all_reachable_vertices(start_label)
+            unreachable_vertices = set(self.vertices.keys()) - reachable
+        
+        return additional_edges
+    
+
+    def get_strogestly_connected_components(self) -> List[Set[str]]:
+        """
+        Get the strongly connected components of the graph using Kosaraju's algorithm.
+
+        Returns:
+            List[Set[str]]: A list of strongly connected components.
+        """
+        def dfs(current: Vertex, visited: Set[Vertex], stack: List[Vertex]) -> None:
+            visited.add(current)
+            for neighbor in current.outgoing_edges:
+                if neighbor.end_vertex not in visited:
+                    dfs(neighbor.end_vertex, visited, stack)
+            stack.append(current)
+        
+        def reverse_edges() -> None:
+            for edge in self.edges:
+                edge.start_vertex, edge.end_vertex = edge.end_vertex, edge.start_vertex
+        
+        def dfs_reverse(current: Vertex, visited: Set[Vertex], component: Set[str]) -> None:
+            visited.add(current)
+            component.add(current.label)
+            for neighbor in current.outgoing_edges:
+                if neighbor.end_vertex not in visited:
+                    dfs_reverse(neighbor.end_vertex, visited, component)
+        
+        # First DFS to fill the stack.
+        visited = set()
+        stack = []
+        for vertex in self.vertices.values():
+            if vertex not in visited:
+                dfs(vertex, visited, stack)
+        
+        # Reverse the edges.
+        reverse_edges()
+        
+        # Second DFS to get the strongly connected components.
+        visited = set()
+        components = []
+        while stack:
+            vertex = stack.pop()
+            if vertex not in visited:
+                component = set()
+                dfs_reverse(vertex, visited, component)
+                components.append(component)
+        
+        return components
 

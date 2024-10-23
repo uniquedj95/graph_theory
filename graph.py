@@ -1,6 +1,6 @@
 from edge import Edge
 from vertex import Vertex
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Set
 
 class DirectedGraph:
     """
@@ -37,7 +37,7 @@ class DirectedGraph:
         """
         if label not in self.vertices:
             self.add_vertex(label)
-            
+
         return self.vertices[label]
     
     def add_edge(self, start: str, end: str) -> None:

@@ -200,52 +200,42 @@ class DirectedGraph:
         dfs(start_vertex, visited, reachable)
         return reachable
     
-    def get_min_additional_edges(self, start_label: str) -> List[tuple[str, str]]:
+    def count_min_additional_edges(self, start_label: str) -> int:
         """
-        Get the minimum number of additional edges to make all vertices reachable from the start vertex.
+        Calculate the minimum number of additional edges needed to make all airports reachable.
 
         args:
             start_label (str): The label of the starting vertex.
 
-        returns:
-            List[tuple[str, str]]: A list of tuples representing the additional edges to be added.
-        """ 
-        
-        # Get all reachable vertices from the start vertex.
-        reachable = self.get_all_reachable_vertices(start_label)
-        
-        # if all nodes are reachable from the start vertex, return an empty list.
-        if len(reachable) == len(self.vertices): return []
+        Returns:
+            int: The minimum number of additional one-way routes.
+        """
+        # Find all SCCs
+        sccs = self.get_strongly_connected_components()
 
-        components = self.get_strongly_connected_components()
+        # Build the condensed graph
+        condensed_graph = self.build_condensed_graph(sccs)
 
-        # create a mapping of vertex to its component
-        vertex_to_component = {}
-        for i, component in enumerate(components):
-            for vertex in component:
-                vertex_to_component[vertex] = i
+        # Find SCC of the start vertex
+        start_component = -1
+        for i, component in enumerate(sccs):
+            if start_label in component:
+                start_component = i
+                break
 
-        # find which component is reachable from the start vertex
-        reachable_components = set()
-        for vertex in reachable:
-            reachable_components.add(vertex_to_component[vertex])
+        # Calculate in-degrees of the condensed graph nodes
+        in_degrees = {i: 0 for i in range(len(sccs))}
+        for node, neighbors in condensed_graph.items():
+            for neighbor in neighbors:
+                in_degrees[neighbor] += 1
 
-        # find additional edges needed
-        additional_edges = []
-        unreachable_vertices = set(self.vertices.keys()) - reachable
-        while unreachable_vertices:
-            from_vertex = min(reachable)
-            to_vertex = min(unreachable_vertices)
-            additional_edges.append((from_vertex, to_vertex))
-            
-            # Add the new edge to the graph
-            self.add_edge(from_vertex, to_vertex)
-            
-            # Update reachable and unreachable vertices
-            reachable = self.get_all_reachable_vertices(start_label)
-            unreachable_vertices = set(self.vertices.keys()) - reachable
-        
-        return additional_edges
+        # Count nodes with in-degree = 0 (excluding the start SCC)
+        zero_in_degree_count = 0
+        for node in range(len(sccs)):
+            if in_degrees[node] == 0 and node != start_component:
+                zero_in_degree_count += 1
+
+        return zero_in_degree_count
 
     def get_strongly_connected_components(self) -> List[Set[str]]:
         """
@@ -292,4 +282,28 @@ class DirectedGraph:
                 strongconnect(vertex)
 
         return components
+    
+    def build_condensed_graph(self, sccs: List[Set[str]]) -> Dict[int, Set[int]]:
+        """
+        Build a new graph where each SCC is treated as a single node.
 
+        args:
+            sccs (List[Set[str]]): A list of SCCs, each as a set of vertex labels.
+
+        Returns:
+            Dict[int, Set[int]]: The condensed graph where each key is an SCC, and the value is a set of connected SCCs.
+        """
+        component_map = {}
+        for i, component in enumerate(sccs):
+            for label in component:
+                component_map[label] = i
+
+        condensed_graph = {i: set() for i in range(len(sccs))}
+
+        for edge in self.edges:
+            start_component = component_map[edge.start_vertex.label]
+            end_component = component_map[edge.end_vertex.label]
+            if start_component != end_component:
+                condensed_graph[start_component].add(end_component)
+
+        return condensed_graph

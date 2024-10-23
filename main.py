@@ -29,12 +29,12 @@ def create_airport_graph() -> DirectedGraph:
 if __name__ == "__main__":
     graph = create_airport_graph()
 
-    # staring airport
-    starting_airport = "TLV"
+    test_cases = ["LGA", "TLV", "HND"]
 
-    additional_routes = graph.count_min_additional_edges(starting_airport)
+    for test_case in test_cases:
+        additional_routes = graph.count_min_additional_edges(test_case)
 
-    if additional_routes:
-        print(f"Need {additional_routes} additional routes")
-    else:
-        print("No additional routes needed!")
+        if additional_routes:
+            print(f"Need minimum of {additional_routes} additional routes from {test_case}")
+        else:
+            print(f"No additional routes needed from {test_case}")
